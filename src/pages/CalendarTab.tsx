@@ -1,8 +1,7 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { Calendar } from '@/components/ui/calendar';
-import { useApp } from '@/contexts/AppContext';
 import { Button } from '@/components/ui/button';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerFooter } from '@/components/ui/drawer';
 import { Input } from '@/components/ui/input';
@@ -11,14 +10,34 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 
+interface CalendarTransaction {
+  id: string;
+  amount: number;
+  type: 'INCOME' | 'EXPENSE';
+  description: string;
+  date: string;
+}
+
 const CalendarTab = () => {
-  const { users, addTransaction } = useApp();
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [amount, setAmount] = useState('');
   const [description, setDescription] = useState('');
   const [type, setType] = useState<'INCOME' | 'EXPENSE'>('INCOME');
-  const [selectedUserId, setSelectedUserId] = useState<string>('');
+  const [transactions, setTransactions] = useState<CalendarTransaction[]>([]);
+  
+  // Load transactions from localStorage on component mount
+  useEffect(() => {
+    const storedTransactions = localStorage.getItem('calendarTransactions');
+    if (storedTransactions) {
+      setTransactions(JSON.parse(storedTransactions));
+    }
+  }, []);
+  
+  // Save transactions to localStorage when they change
+  useEffect(() => {
+    localStorage.setItem('calendarTransactions', JSON.stringify(transactions));
+  }, [transactions]);
   
   // Get transactions for the selected date
   const getDailyTransactions = () => {
@@ -26,35 +45,24 @@ const CalendarTab = () => {
     
     const formattedDate = format(selectedDate, 'yyyy-MM-dd');
     
-    let dailyTransactions: Array<{
-      id: string;
-      userId: string;
-      userName: string;
-      amount: number;
-      type: string;
-      description: string;
-    }> = [];
-    
-    users.forEach(user => {
-      user.transactions.forEach(transaction => {
-        const transactionDate = transaction.date.substring(0, 10);
-        if (transactionDate === formattedDate) {
-          dailyTransactions.push({
-            id: transaction.id,
-            userId: user.id,
-            userName: user.name,
-            amount: transaction.amount,
-            type: transaction.type,
-            description: transaction.description
-          });
-        }
-      });
-    });
-    
-    return dailyTransactions;
+    return transactions.filter(transaction => 
+      transaction.date.substring(0, 10) === formattedDate
+    );
+  };
+  
+  // Calculate total balance
+  const calculateTotalBalance = () => {
+    return transactions.reduce((total, transaction) => {
+      if (transaction.type === 'INCOME') {
+        return total + transaction.amount;
+      } else {
+        return total - transaction.amount;
+      }
+    }, 0);
   };
   
   const dailyTransactions = getDailyTransactions();
+  const totalBalance = calculateTotalBalance();
   
   const handleDateSelect = (date: Date | undefined) => {
     setSelectedDate(date);
@@ -69,38 +77,31 @@ const CalendarTab = () => {
     setAmount('');
     setDescription('');
     setType('INCOME');
-    setSelectedUserId(users.length > 0 ? users[0].id : '');
     setIsDrawerOpen(true);
   };
   
   const handleAddTransaction = () => {
-    if (!selectedUserId) {
-      toast.error("Please select a user");
-      return;
-    }
-    
     if (!amount || isNaN(parseFloat(amount)) || parseFloat(amount) <= 0) {
       toast.error("Please enter a valid amount");
       return;
     }
     
-    // Convert INCOME/EXPENSE to the app's GIVEN/TAKEN transaction types
-    const transactionType = type === 'INCOME' ? 'TAKEN' : 'GIVEN';
+    const newTransaction: CalendarTransaction = {
+      id: Date.now().toString(),
+      amount: parseFloat(amount),
+      type,
+      description: description || `${type} on ${format(selectedDate!, 'PP')}`,
+      date: selectedDate!.toISOString()
+    };
     
-    addTransaction(
-      selectedUserId, 
-      parseFloat(amount), 
-      transactionType, 
-      description || `${type} on ${format(selectedDate!, 'PP')}`
-    );
-    
+    setTransactions([...transactions, newTransaction]);
     setIsDrawerOpen(false);
     toast.success(`${type.toLowerCase()} of ₹${amount} recorded`);
   };
   
   return (
     <div className="pb-20">
-      <h1 className="text-2xl font-bold mb-4">Calendar</h1>
+      <h1 className="text-2xl font-bold mb-4">Money Calendar</h1>
       
       <div className="bg-white dark:bg-gray-800 rounded-lg p-4 mb-4 shadow-sm">
         <Calendar
@@ -109,6 +110,18 @@ const CalendarTab = () => {
           onSelect={handleDateSelect}
           className="mx-auto"
         />
+      </div>
+      
+      <div className="bg-white dark:bg-gray-800 rounded-lg p-4 mb-4 shadow-sm">
+        <h2 className="text-lg font-semibold mb-2">Balance Summary</h2>
+        <div className="grid grid-cols-1 gap-2">
+          <div className={`p-3 rounded-lg ${totalBalance >= 0 ? 'bg-green-50 dark:bg-green-900/30' : 'bg-red-50 dark:bg-red-900/30'}`}>
+            <p className="text-sm font-medium">Total Balance</p>
+            <p className={`text-xl font-bold ${totalBalance >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+              ₹{totalBalance.toFixed(2)}
+            </p>
+          </div>
+        </div>
       </div>
       
       <div className="flex justify-between items-center mb-4">
@@ -123,12 +136,16 @@ const CalendarTab = () => {
           {dailyTransactions.map(transaction => (
             <div 
               key={transaction.id} 
-              className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border-l-4 border-l-solid border-l-primary"
+              className={`bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border-l-4 ${
+                transaction.type === 'INCOME' 
+                  ? 'border-l-green-500' 
+                  : 'border-l-red-500'
+              }`}
             >
               <div className="flex justify-between mb-1">
-                <span className="font-medium">{transaction.userName}</span>
-                <span className={transaction.type === 'TAKEN' ? 'text-green-600' : 'text-red-600'}>
-                  {transaction.type === 'TAKEN' ? '+' : '-'}₹{transaction.amount}
+                <span className="font-medium">{transaction.type}</span>
+                <span className={transaction.type === 'INCOME' ? 'text-green-600' : 'text-red-600'}>
+                  {transaction.type === 'INCOME' ? '+' : '-'}₹{transaction.amount.toFixed(2)}
                 </span>
               </div>
               {transaction.description && (
@@ -165,20 +182,6 @@ const CalendarTab = () => {
                   <Label htmlFor="expense">Expense</Label>
                 </div>
               </RadioGroup>
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="user">Select User</Label>
-              <select 
-                id="user" 
-                value={selectedUserId}
-                onChange={(e) => setSelectedUserId(e.target.value)}
-                className="w-full p-2 border rounded-md"
-              >
-                {users.map(user => (
-                  <option key={user.id} value={user.id}>{user.name}</option>
-                ))}
-              </select>
             </div>
             
             <div className="space-y-2">
