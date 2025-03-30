@@ -1,9 +1,11 @@
+
 import React, { useState, useEffect } from 'react';
 import { AppProvider } from '@/contexts/AppContext';
 import TabNavigator from '@/components/TabNavigator';
 import HomeTab from './HomeTab';
 import ReportsTab from './ReportsTab';
 import SettingsTab from './SettingsTab';
+import CalendarTab from './CalendarTab';
 import UserDetailsPage from './UserDetailsPage';
 import VoiceAssistantButton from '@/components/VoiceAssistantButton';
 
@@ -32,6 +34,8 @@ const Index = () => {
     switch (activeTab) {
       case 'home':
         return <HomeTab onUserClick={handleUserClick} />;
+      case 'calendar':
+        return <CalendarTab />;
       case 'reports':
         return <ReportsTab />;
       case 'settings':

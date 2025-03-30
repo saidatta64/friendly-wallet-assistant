@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Home, PieChart, Settings } from 'lucide-react';
+import { Home, PieChart, Settings, Calendar } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface TabNavigatorProps {
@@ -11,6 +11,7 @@ interface TabNavigatorProps {
 const TabNavigator: React.FC<TabNavigatorProps> = ({ activeTab, onTabChange }) => {
   const tabs = [
     { id: 'home', label: 'Home', icon: Home },
+    { id: 'calendar', label: 'Calendar', icon: Calendar },
     { id: 'reports', label: 'Reports', icon: PieChart },
     { id: 'settings', label: 'Settings', icon: Settings },
   ];
