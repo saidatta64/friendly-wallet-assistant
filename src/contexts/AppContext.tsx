@@ -1,6 +1,7 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { toast } from "sonner";
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Alert } from 'react-native';
 
 export type TransactionType = 'GIVEN' | 'TAKEN';
 
@@ -47,27 +48,51 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const [currentUserId, setCurrentUserId] = useState<string>('');
   const [appSettings, setAppSettings] = useState(defaultAppSettings);
   
-  // Load data from localStorage on component mount
+  // Load data from AsyncStorage on component mount
   useEffect(() => {
-    const storedUsers = localStorage.getItem('khataUsers');
-    const storedSettings = localStorage.getItem('khataSettings');
+    const loadData = async () => {
+      try {
+        const storedUsers = await AsyncStorage.getItem('khataUsers');
+        const storedSettings = await AsyncStorage.getItem('khataSettings');
+        
+        if (storedUsers) {
+          setUsers(JSON.parse(storedUsers));
+        }
+        
+        if (storedSettings) {
+          setAppSettings(JSON.parse(storedSettings));
+        }
+      } catch (error) {
+        console.error("Error loading data from AsyncStorage:", error);
+      }
+    };
     
-    if (storedUsers) {
-      setUsers(JSON.parse(storedUsers));
-    }
-    
-    if (storedSettings) {
-      setAppSettings(JSON.parse(storedSettings));
-    }
+    loadData();
   }, []);
   
-  // Save data to localStorage whenever it changes
+  // Save data to AsyncStorage whenever it changes
   useEffect(() => {
-    localStorage.setItem('khataUsers', JSON.stringify(users));
+    const saveUsers = async () => {
+      try {
+        await AsyncStorage.setItem('khataUsers', JSON.stringify(users));
+      } catch (error) {
+        console.error("Error saving users to AsyncStorage:", error);
+      }
+    };
+    
+    saveUsers();
   }, [users]);
   
   useEffect(() => {
-    localStorage.setItem('khataSettings', JSON.stringify(appSettings));
+    const saveSettings = async () => {
+      try {
+        await AsyncStorage.setItem('khataSettings', JSON.stringify(appSettings));
+      } catch (error) {
+        console.error("Error saving settings to AsyncStorage:", error);
+      }
+    };
+    
+    saveSettings();
   }, [appSettings]);
   
   const addUser = (name: string, phone: string) => {
@@ -80,7 +105,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     };
     
     setUsers([...users, newUser]);
-    toast.success("New contact added successfully");
+    Alert.alert("Success", "New contact added successfully");
   };
   
   const updateUser = (id: string, name: string, phone: string) => {
@@ -90,7 +115,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       }
       return user;
     }));
-    toast.success("Contact updated successfully");
+    Alert.alert("Success", "Contact updated successfully");
   };
   
   const addTransaction = (userId: string, amount: number, type: TransactionType, description: string) => {
@@ -119,7 +144,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       return user;
     }));
     
-    toast.success(`Transaction of ₹${amount} recorded`);
+    Alert.alert("Success", `Transaction of ₹${amount} recorded`);
   };
   
   const updateUserSettings = (name: string, phone: string) => {
@@ -127,7 +152,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       userName: name,
       userPhone: phone
     });
-    toast.success("Settings updated successfully");
   };
   
   const getUserById = (id: string) => {
