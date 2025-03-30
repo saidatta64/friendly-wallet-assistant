@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
+import { Trash2 } from 'lucide-react';
 
 interface CalendarTransaction {
   id: string;
@@ -99,29 +100,29 @@ const CalendarTab = () => {
     toast.success(`${type.toLowerCase()} of ₹${amount} recorded`);
   };
   
+  const handleDeleteTransaction = (id: string) => {
+    setTransactions(transactions.filter(transaction => transaction.id !== id));
+    toast.success("Transaction deleted successfully");
+  };
+  
   return (
     <div className="pb-20">
       <h1 className="text-2xl font-bold mb-4">Money Calendar</h1>
       
       <div className="bg-white dark:bg-gray-800 rounded-lg p-4 mb-4 shadow-sm">
+        <div className={`p-4 rounded-lg ${totalBalance >= 0 ? 'bg-green-50 dark:bg-green-900/30' : 'bg-red-50 dark:bg-red-900/30'} mb-4`}>
+          <p className="text-sm font-medium">Total Balance</p>
+          <p className={`text-2xl font-bold ${totalBalance >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+            ₹{totalBalance.toFixed(2)}
+          </p>
+        </div>
+        
         <Calendar
           mode="single"
           selected={selectedDate}
           onSelect={handleDateSelect}
           className="mx-auto"
         />
-      </div>
-      
-      <div className="bg-white dark:bg-gray-800 rounded-lg p-4 mb-4 shadow-sm">
-        <h2 className="text-lg font-semibold mb-2">Balance Summary</h2>
-        <div className="grid grid-cols-1 gap-2">
-          <div className={`p-3 rounded-lg ${totalBalance >= 0 ? 'bg-green-50 dark:bg-green-900/30' : 'bg-red-50 dark:bg-red-900/30'}`}>
-            <p className="text-sm font-medium">Total Balance</p>
-            <p className={`text-xl font-bold ${totalBalance >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
-              ₹{totalBalance.toFixed(2)}
-            </p>
-          </div>
-        </div>
       </div>
       
       <div className="flex justify-between items-center mb-4">
@@ -144,9 +145,18 @@ const CalendarTab = () => {
             >
               <div className="flex justify-between mb-1">
                 <span className="font-medium">{transaction.type}</span>
-                <span className={transaction.type === 'INCOME' ? 'text-green-600' : 'text-red-600'}>
-                  {transaction.type === 'INCOME' ? '+' : '-'}₹{transaction.amount.toFixed(2)}
-                </span>
+                <div className="flex items-center gap-3">
+                  <span className={transaction.type === 'INCOME' ? 'text-green-600' : 'text-red-600'}>
+                    {transaction.type === 'INCOME' ? '+' : '-'}₹{transaction.amount.toFixed(2)}
+                  </span>
+                  <button 
+                    onClick={() => handleDeleteTransaction(transaction.id)}
+                    className="text-gray-400 hover:text-red-500 transition-colors"
+                    aria-label="Delete transaction"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </div>
               </div>
               {transaction.description && (
                 <p className="text-sm text-gray-500 dark:text-gray-400">{transaction.description}</p>

@@ -1,14 +1,17 @@
 
 import React, { useState, useEffect } from 'react';
-import { User, Save } from 'lucide-react';
+import { User, Save, Sun, Moon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useApp } from '@/contexts/AppContext';
+import { Switch } from '@/components/ui/switch';
+import { useTheme } from 'next-themes';
 
 const SettingsTab: React.FC = () => {
   const { updateUserSettings } = useApp();
+  const { theme, setTheme } = useTheme();
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [nameError, setNameError] = useState('');
@@ -50,10 +53,37 @@ const SettingsTab: React.FC = () => {
     // Update settings
     updateUserSettings(name.trim(), phone.trim());
   };
+
+  const toggleTheme = () => {
+    setTheme(theme === 'dark' ? 'light' : 'dark');
+  };
   
   return (
     <div className="pb-20">
       <h1 className="text-2xl font-bold mb-4">Settings</h1>
+      
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle>Theme</CardTitle>
+          <CardDescription>Customize your app appearance</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <Sun className="h-5 w-5 text-yellow-500" />
+              <span>Light Mode</span>
+            </div>
+            <Switch 
+              checked={theme === 'dark'}
+              onCheckedChange={toggleTheme}
+            />
+            <div className="flex items-center space-x-2">
+              <span>Dark Mode</span>
+              <Moon className="h-5 w-5 text-blue-500" />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
       
       <Card>
         <CardHeader>
