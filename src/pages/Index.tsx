@@ -1,13 +1,61 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+import React, { useState, useEffect } from 'react';
+import { AppProvider } from '@/contexts/AppContext';
+import TabNavigator from '@/components/TabNavigator';
+import HomeTab from './HomeTab';
+import ReportsTab from './ReportsTab';
+import SettingsTab from './SettingsTab';
+import UserDetailsPage from './UserDetailsPage';
+import VoiceAssistantButton from '@/components/VoiceAssistantButton';
 
 const Index = () => {
+  const [activeTab, setActiveTab] = useState('home');
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+  
+  const handleUserClick = (userId: string) => {
+    setSelectedUserId(userId);
+  };
+  
+  const handleBackToHome = () => {
+    setSelectedUserId(null);
+  };
+  
+  const renderContent = () => {
+    if (selectedUserId) {
+      return (
+        <UserDetailsPage 
+          userId={selectedUserId} 
+          onBack={handleBackToHome} 
+        />
+      );
+    }
+    
+    switch (activeTab) {
+      case 'home':
+        return <HomeTab onUserClick={handleUserClick} />;
+      case 'reports':
+        return <ReportsTab />;
+      case 'settings':
+        return <SettingsTab />;
+      default:
+        return <HomeTab onUserClick={handleUserClick} />;
+    }
+  };
+  
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold mb-4">Welcome to Your Blank App</h1>
-        <p className="text-xl text-gray-600">Start building your amazing project here!</p>
+    <AppProvider>
+      <div className="container max-w-md mx-auto px-4 py-6">
+        {renderContent()}
+        
+        {!selectedUserId && (
+          <TabNavigator 
+            activeTab={activeTab} 
+            onTabChange={setActiveTab} 
+          />
+        )}
+        
+        <VoiceAssistantButton />
       </div>
-    </div>
+    </AppProvider>
   );
 };
 
