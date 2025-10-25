@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { ArrowLeft, Edit2, Plus, Phone, MessageCircle } from 'lucide-react';
+import { ArrowLeft, Edit2, Plus, Phone, MessageCircle, ArrowUpRight, ArrowDownLeft } from 'lucide-react';
 import { useApp } from '@/contexts/AppContext';
 import { Button } from '@/components/ui/button';
 import ChatTransactionView from '@/components/ChatTransactionView';
