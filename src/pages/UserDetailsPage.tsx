@@ -1,12 +1,13 @@
 
 import React, { useState } from 'react';
-import { ArrowLeft, Edit2, Plus, Share } from 'lucide-react';
+import { ArrowLeft, Edit2, Plus, Phone, MessageCircle } from 'lucide-react';
 import { useApp } from '@/contexts/AppContext';
 import { Button } from '@/components/ui/button';
-import TransactionItem from '@/components/TransactionItem';
+import ChatTransactionView from '@/components/ChatTransactionView';
 import AddTransactionDialog from '@/components/AddTransactionDialog';
 import AddUserDialog from '@/components/AddUserDialog';
 import { toast } from "sonner";
+import { Badge } from '@/components/ui/badge';
 
 interface UserDetailsPageProps {
   userId: string;
@@ -63,101 +64,114 @@ const UserDetailsPage: React.FC<UserDetailsPageProps> = ({ userId, onBack }) => 
   };
   
   return (
-    <div className="pb-20">
+    <div className="flex flex-col h-screen bg-gradient-to-br from-blue-50 to-indigo-50">
       {/* Header */}
-      <div className="flex items-center mb-6">
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          onClick={onBack}
-          className="mr-2"
-        >
-          <ArrowLeft className="h-5 w-5" />
-        </Button>
-        <div className="flex-1">
-          <h1 className="text-xl font-bold">{user.name}</h1>
-          <p className="text-sm text-gray-500">{user.phone}</p>
+      <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-4 py-4 shadow-lg">
+        <div className="flex items-center gap-3">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onBack}
+            className="text-white hover:bg-white/20"
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+
+          <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center font-bold text-lg">
+            {user.name.charAt(0).toUpperCase()}
+          </div>
+
+          <div className="flex-1">
+            <div className="flex items-center gap-2">
+              <h1 className="text-lg font-semibold">{user.name}</h1>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setIsEditUserDialogOpen(true)}
+                className="h-6 w-6 text-white hover:bg-white/20"
+              >
+                <Edit2 className="h-3 w-3" />
+              </Button>
+            </div>
+            <p className="text-xs text-white/80">{user.phone}</p>
+          </div>
+
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={handleShareWhatsApp}
+            className="text-white hover:bg-white/20"
+          >
+            <MessageCircle className="h-5 w-5" />
+          </Button>
+
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={handleShareSMS}
+            className="text-white hover:bg-white/20"
+          >
+            <Phone className="h-5 w-5" />
+          </Button>
         </div>
-        <Button 
-          variant="ghost" 
-          size="icon"
-          onClick={() => setIsEditUserDialogOpen(true)}
-        >
-          <Edit2 className="h-4 w-4" />
-        </Button>
+
+        {/* Balance Badge */}
+        <div className="mt-3 flex items-center gap-2">
+          <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full ${
+            user.balance >= 0
+              ? 'bg-red-500/90'
+              : 'bg-green-500/90'
+          }`}>
+            <ArrowLeft className={`h-4 w-4 ${user.balance >= 0 ? 'rotate-45' : '-rotate-45'}`} />
+            <span className="text-sm font-semibold">
+              ₹ {Math.abs(user.balance)}
+            </span>
+          </div>
+          <span className="text-xs text-white/80">
+            {user.balance >= 0 ? "You'll Get" : "You'll Give"}
+          </span>
+        </div>
       </div>
-      
-      {/* Balance card */}
-      <div className="p-6 mb-6 rounded-xl balance-card text-white text-center">
-        <p className="text-sm font-medium opacity-90 mb-1">
-          {user.balance >= 0 ? 'You will get' : 'You will give'}
-        </p>
-        <p className="text-3xl font-bold mb-2">
-          ₹{Math.abs(user.balance).toFixed(2)}
-        </p>
+
+      {/* Chat View */}
+      <div className="flex-1 overflow-y-auto px-4">
+        <ChatTransactionView
+          transactions={user.transactions}
+          userName={user.name}
+        />
       </div>
-      
-      {/* Action buttons */}
-      <div className="grid grid-cols-3 gap-4 mb-6">
-        <Button 
-          variant="outline" 
-          className="flex flex-col items-center py-3"
+
+      {/* Bottom Summary */}
+      <div className="bg-white border-t px-4 py-3 shadow-lg">
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-2">
+            <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+              <ArrowDownLeft className="h-3 w-3 mr-1" />
+              You've Taken
+            </Badge>
+            <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">
+              <ArrowUpRight className="h-3 w-3 mr-1" />
+              You've Given
+            </Badge>
+          </div>
+        </div>
+
+        <Button
           onClick={() => setIsAddTransactionDialogOpen(true)}
+          className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
         >
-          <Plus className="h-5 w-5 mb-1" />
-          <span className="text-xs">Add</span>
-        </Button>
-        
-        <Button 
-          variant="outline" 
-          className="flex flex-col items-center py-3"
-          onClick={handleShareWhatsApp}
-        >
-          <Share className="h-5 w-5 mb-1" />
-          <span className="text-xs">WhatsApp</span>
-        </Button>
-        
-        <Button 
-          variant="outline" 
-          className="flex flex-col items-center py-3"
-          onClick={handleShareSMS}
-        >
-          <Share className="h-5 w-5 mb-1" />
-          <span className="text-xs">SMS</span>
+          <Plus className="h-5 w-5 mr-2" />
+          Add Transaction
         </Button>
       </div>
-      
-      {/* Transactions list */}
-      <div>
-        <h2 className="text-lg font-semibold mb-3">Transactions</h2>
-        
-        {user.transactions.length === 0 ? (
-          <div className="text-center py-6 text-gray-500">
-            No transactions yet
-          </div>
-        ) : (
-          <div className="space-y-2">
-            {user.transactions
-              .slice() // Create a copy to avoid mutating the original
-              .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()) // Sort by date (newest first)
-              .map(transaction => (
-                <TransactionItem 
-                  key={transaction.id} 
-                  transaction={transaction} 
-                />
-              ))
-            }
-          </div>
-        )}
-      </div>
-      
+
       {/* Dialogs */}
       <AddTransactionDialog
         isOpen={isAddTransactionDialogOpen}
         onClose={() => setIsAddTransactionDialogOpen(false)}
         userId={userId}
       />
-      
+
       <AddUserDialog
         isOpen={isEditUserDialogOpen}
         onClose={() => setIsEditUserDialogOpen(false)}
