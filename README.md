@@ -52,13 +52,54 @@ npm run dev
 
 ## What technologies are used for this project?
 
-This project is built with .
+This project is built with:
 
 - Vite
 - TypeScript
 - React
 - shadcn-ui
 - Tailwind CSS
+- Supabase (Database, Auth, Storage)
+
+## Database Schema
+
+### `profiles`
+| Column      | Type        | Constraints                          |
+|-------------|-------------|--------------------------------------|
+| id          | UUID        | PRIMARY KEY, REFERENCES auth.users   |
+| name        | TEXT        |                                      |
+| phone       | TEXT        |                                      |
+| created_at  | TIMESTAMPTZ | DEFAULT now(), NOT NULL              |
+| updated_at  | TIMESTAMPTZ | DEFAULT now(), NOT NULL              |
+
+### `contacts`
+| Column      | Type        | Constraints                                    |
+|-------------|-------------|------------------------------------------------|
+| id          | UUID        | PRIMARY KEY, DEFAULT gen_random_uuid()         |
+| user_id     | UUID        | REFERENCES profiles(id), NOT NULL             |
+| name        | TEXT        | NOT NULL                                        |
+| phone       | TEXT        |                                                 |
+| balance     | NUMERIC     | DEFAULT 0, NOT NULL                             |
+| created_at  | TIMESTAMPTZ | DEFAULT now(), NOT NULL                         |
+| updated_at  | TIMESTAMPTZ | DEFAULT now(), NOT NULL                         |
+
+### `transactions`
+| Column      | Type        | Constraints                                    |
+|-------------|-------------|------------------------------------------------|
+| id          | UUID        | PRIMARY KEY, DEFAULT gen_random_uuid()         |
+| contact_id  | UUID        | REFERENCES contacts(id), NOT NULL              |
+| user_id     | UUID        | REFERENCES profiles(id), NOT NULL             |
+| amount      | NUMERIC     | NOT NULL                                        |
+| type        | TEXT        | CHECK (type IN ('GIVEN', 'TAKEN')), NOT NULL   |
+| description | TEXT        |                                                 |
+| date        | TIMESTAMPTZ | DEFAULT now(), NOT NULL                         |
+| created_at  | TIMESTAMPTZ | DEFAULT now(), NOT NULL                         |
+
+### Security
+- **Row Level Security (RLS)** is enabled on all tables
+- Users can only access their own profiles, contacts, and transactions
+- Triggers auto-update `updated_at` on profiles and contacts
+- Auto-creates a profile row when a new user signs up
 
 ## How can I deploy this project?
 
